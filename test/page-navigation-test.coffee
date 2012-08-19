@@ -123,11 +123,31 @@ describe 'Page Navigation', ->
 		it "should have a guest with the mobile number 6785551001", ->
 			_containsTextUnderElement("6785551001", _bodyDoc, "//table/tbody/tr[1]/td[4]").should.equal true, "test number not shown"
 
+		it "should have a button to add a new guest", ->
+			_textOfElement(_bodyDoc, "//a[@href='/guests/new']").should.match /Add Guest/
+
+		it "should have a button to page a guest", ->
+			_textOfElement(_bodyDoc, "//a[@href='/guests/1/page']").should.match /Page/
+
+		it "should have a button to edit a guest", ->
+			_textOfElement(_bodyDoc, "//a[@href='/guests/1/edit']").should.match /Edit/
+
+		it "should have a button to delete a guest", ->
+			_textOfElement(_bodyDoc, "//a[@href='/guests/1/delete']").should.match /Remove/
+
 	describe "Add a new guest", ->
+
+		it "should have a screen to add a new guest /guests/new"
+
+		it "should show the new guest on /guests"
 
 	describe "Page a guest", ->
 
+		it "should trigger an SMS to page the guest"
+
 	describe "Delete a guest", ->
+
+		it "should remove the guest from the /guests page"
 
 
 

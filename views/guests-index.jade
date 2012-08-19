@@ -15,11 +15,11 @@
 					li
 						a(href='#contact') Contact
 .container
-	//
-		Main hero unit for a primary marketing message or call to action 
 	section#guestsGrid
 			.page-header
-					h1 Gests
+				h1 Guests
+				p 
+					a.btn(href="/guests/new") Add Guest »
 				table.table.table-bordered.table-striped
 					thead
 						tr
@@ -31,7 +31,9 @@
 						each guest in guests
 							tr
 								td 
-									a.btn(href="/guests/#{guest.id}/page") Page »
+									a.btn(href="/guests/#{guest.id}/page") Page
+									a.btn(href="/guests/#{guest.id}/edit") Edit
+									a.btn(href="/guests/#{guest.id}/delete") Remove
 								td= guest.name
 								td= guest.description
 								td= guest.mobileNumber
