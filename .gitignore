@@ -5,3 +5,5 @@ tmp/
 bunyan.log
 
 heroku.log
+
+guestpager-test.log

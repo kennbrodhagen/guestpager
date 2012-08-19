@@ -141,13 +141,20 @@ describe 'Page Navigation', ->
 
 		it "should show the new guest on /guests"
 
-	describe "Page a guest", ->
+	describe "Edit a guest", ->
 
-		it "should trigger an SMS to page the guest"
+		it "should have a screen to edit the guest at /guests/:id/edit"
+
+		it "should display the posted edit on /guests"
 
 	describe "Delete a guest", ->
 
 		it "should remove the guest from the /guests page"
+
+	describe "Page a guest", ->
+
+		it "should trigger an SMS to page the guest"
+
 
 
 
