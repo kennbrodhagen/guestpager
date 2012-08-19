@@ -52,6 +52,12 @@ describe 'Page Navigation', ->
 		#app.log.info "*** REQUEST SUCCESSFUL.  \n*** BODYDOC:\n #{JSON.stringify(bodyDoc)}\n"
 		guestback(bodyDoc)
 
+	_fetchPage = (page, callback) ->
+		request.get {uri:"#{uriRoot(app) + page}"}, (err, response, body) ->
+			_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->	
+				_bodyDoc = bodyDoc	
+				callback(bodyDoc)	
+
 	_confirmRequestStatusAndParseHtml = (expectedStatus, err, response, body, guestback) ->
 		_confirmRequestStatusAndParse expectedStatus, err, response, body, libxmljs.parseHtmlString, guestback
 
@@ -107,10 +113,8 @@ describe 'Page Navigation', ->
 	describe "View the guests page /guests", ->
 
 		before (done) ->
-			request.get {uri:"#{uriRoot(app)}/guests"}, (err, response, body) ->
-				_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->	
-					_bodyDoc = bodyDoc	
-					done()	
+			_fetchPage "/guests", ->
+				done()
 
 		it "should have guests in the title", ->
 			_textOfElement(_bodyDoc, "//head/title").should.match /Guests/i
