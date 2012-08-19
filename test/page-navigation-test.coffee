@@ -97,18 +97,17 @@ describe 'Page Navigation', ->
 
 	describe 'View the home page /home', ->
 
+		before (done) ->
+			_fetchPage "/home", ->
+				done()
+
 		it "should have should have the site name in the title", (done) ->
-			#app.log.info "\n\n*** BODYDOC:\n #{JSON.stringify(_bodyDoc)}\n\n"
-			request.get {uri:"#{uriRoot(app)}/home"}, (err, response, body) ->
-				_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->
-					_textOfElement(bodyDoc, '//head/title').should.match /Phone System/
-					done()
+			_textOfElement(_bodyDoc, '//head/title').should.match /Phone System/
+			done()
 
 		it "should have a link to the guests list", (done) ->
-			request.get {uri:"#{uriRoot(app)}/home"}, (err, response, body) ->
-				_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->
-					_textOfElement(bodyDoc, "//a[@id='guests-index' and @href='/guests']").should.match /Guests/
-					done()
+			_textOfElement(_bodyDoc, "//a[@id='guests-index' and @href='/guests']").should.match /Guests/
+			done()
 
 	describe "View the guests page /guests", ->
 
@@ -141,7 +140,12 @@ describe 'Page Navigation', ->
 
 	describe "Add a new guest", ->
 
-		it "should have a screen to add a new guest /guests/new"
+		before (done) ->
+			_fetchPage "/guests/new", ->
+				done()
+
+		it "should have a screen to add a new guest /guests/new", ->
+			_textOfElement(_bodyDoc, "//head/title").should.match /Add Guest/i
 
 		it "should show the new guest on /guests"
 

@@ -26,4 +26,10 @@ class GuestsController
 			#app.log.info renderArgs, "GuestsController.index:"
 			res.render 'guests-index', renderArgs 
 
+	new: (req, res) =>
+		#@app.log.info {req: req}, "guestsController#new"
+		app = @app
+		renderArgs = {title: "Add Guest"}
+		res.render 'guests-new', renderArgs
+
 module.exports = GuestsController
