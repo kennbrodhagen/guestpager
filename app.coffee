@@ -1,10 +1,11 @@
 # Factory functions to build the parts of our app
-createServer = (port) ->
+createServer = (port, log) ->
 	express = require("express")
 	server = express.createServer()
 	server.configure ->
 		server.set "views", __dirname + "/views"
 		server.set "view engine", "jade"
+		server.set "view options", { pretty: true }
 		server.set "port", port
 		server.use express.bodyParser()
 		server.use express.methodOverride()
@@ -13,6 +14,9 @@ createServer = (port) ->
 		server.use require("stylus").middleware(src: __dirname + "/public")
 		server.use server.router
 		server.use express.static(__dirname + "/public")
+		server.use (err, req, res, next) ->
+			log.error {stack: err.stack}, "Error processing request:"
+			next err
 
 	server.configure "development", ->
 		server.use express.errorHandler(
@@ -43,7 +47,7 @@ determinePort = ->
 
 class App
 	constructor: (log,store) ->
-		@server = createServer(determinePort())
+		@server = createServer(determinePort(), log)
 		@log = log
 		@store = store
 		require("./routes") @

@@ -3,13 +3,13 @@ include navbar
 	section#guestForm
 			.page-header
 				h1 Add a Guest
-				form.well
+				form(action="/guests").well
 					label Name
-					input(type="text")
+					input(type="text", id="name", name="name")
 					label Description
-					input(type="text")
+					input(type="text", id="description", name="description")
 					label Mobile Phone Number
-					input(type="text")
+					input(type="text", id="mobileNumber", name="mobileNumber")
 					p
 						button.btn(type="submit") Save
 	include footer

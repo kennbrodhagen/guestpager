@@ -17,7 +17,8 @@ describe 'Page Navigation', ->
 	before (done) ->
 		factory = require "../factory"
 		App = require "../app"
-		app = new App factory.createTestLog(), factory.createTestStore(factory.createTestGuests())
+		log = factory.createTestLog()
+		app = new App log, factory.createTestStore(log, factory.createTestGuests())
 		app.server.listen app.server.settings.port, () ->
 			app.log.info "Test server listening on port #{app.server.settings.port} in #{app.server.settings.env} mode"
 			done()
@@ -30,16 +31,16 @@ describe 'Page Navigation', ->
 
 
 	# Helper method to make a request, confirm it was successful, and parse the body
-	_requestConfirmAndParse = (uri, guestback) ->
+	_requestConfirmAndParse = (uri, callback) ->
 			#app.log.info "*** REQUESTING URI: #{uri}"
 			request.get {uri:uri}, (err, response, body) ->
-				_confirmRequestStatusAndParseHtml err, response, body, guestback
+				_confirmRequestStatusAndParseHtml err, response, body, callback
 
 
 	# Helper method to confirm a response was successful
 	# Parses and save the body as an html dom object.
 	# It's nice to provide the additional description argument since these functions are guested from many places.
-	_confirmRequestStatusAndParse = (expectedStatus, err, response, body, parse, guestback) ->
+	_confirmRequestStatusAndParse = (expectedStatus, err, response, body, parse, callback) ->
 		#app.log.info {response: body}, "Response #{response}"
 		should.not.exist err, "Request returned an error: #{JSON.stringify(err)}."
 		should.exist  response, "Response is null."
@@ -47,10 +48,10 @@ describe 'Page Navigation', ->
 		should.exist body, "Body is null."
 		bodyDoc = parse body
 		should.exist bodyDoc, "Body parsed into null document."
-		#app.log.info "*** REQUEST SUCCESSFUL.  \n*** RESPONSE:\n"
-		#app.log.info "*** REQUEST SUCCESSFUL.  \n*** BODY:\n #{JSON.stringify(body)}\n"
-		#app.log.info "*** REQUEST SUCCESSFUL.  \n*** BODYDOC:\n #{JSON.stringify(bodyDoc)}\n"
-		guestback(bodyDoc)
+		# app.log.info "*** REQUEST SUCCESSFUL.  \n*** RESPONSE:\n"
+		# app.log.info "*** REQUEST SUCCESSFUL.  \n*** BODY:\n #{JSON.stringify(body)}\n"
+		# app.log.info "*** REQUEST SUCCESSFUL.  \n*** BODYDOC:\n #{JSON.stringify(bodyDoc)}\n"
+		callback(bodyDoc)
 
 	_fetchPage = (page, callback) ->
 		request.get {uri:"#{uriRoot(app) + page}"}, (err, response, body) ->
@@ -58,11 +59,11 @@ describe 'Page Navigation', ->
 				_bodyDoc = bodyDoc	
 				callback(bodyDoc)	
 
-	_confirmRequestStatusAndParseHtml = (expectedStatus, err, response, body, guestback) ->
-		_confirmRequestStatusAndParse expectedStatus, err, response, body, libxmljs.parseHtmlString, guestback
+	_confirmRequestStatusAndParseHtml = (expectedStatus, err, response, body, callback) ->
+		_confirmRequestStatusAndParse expectedStatus, err, response, body, libxmljs.parseHtmlString, callback
 
-	_confirmRequestStatusAndParseXml = (expectedStatus, err, response, body, guestback) ->
-		_confirmRequestStatusAndParse expectedStatus, err, response, body, libxmljs.parseXmlString, guestback
+	_confirmRequestStatusAndParseXml = (expectedStatus, err, response, body, callback) ->
+		_confirmRequestStatusAndParse expectedStatus, err, response, body, libxmljs.parseXmlString, callback
 
 	# Helper method returns true if the xpath has at least one node containing text value text
 	_containsTextUnderElement = (text, bodyDoc, xpath) ->
@@ -140,27 +141,46 @@ describe 'Page Navigation', ->
 
 	describe "Add a new guest", ->
 
-		before (done) ->
+		it "should have a screen to add a new guest /guests/new", (done) ->
 			_fetchPage "/guests/new", ->
+				_textOfElement(_bodyDoc, "//head/title").should.match /Add Guest/i
 				done()
 
-		it "should have a screen to add a new guest /guests/new", ->
-			_textOfElement(_bodyDoc, "//head/title").should.match /Add Guest/i
+		it "should show the new guest on /guests", (done) ->
+			body =
+				name: "Joe Guest"
+				description: "Party of 5"
+				mobileNumber: "4045551212"
 
-		it "should show the new guest on /guests"
+			request.post {uri:"#{uriRoot(app)}/guests", form: body, followAllRedirects:true}, (err, response, body) ->				
+				_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->
+					_containsTextUnderElement("Joe Guest", bodyDoc, "//table/tbody/tr[3]/td[2]").should.equal true, "new guest not added"
+					done()
 
 	describe "Edit a guest", ->
 
-		it "should have a screen to edit the guest at /guests/:id/edit"
+		it "should have a screen to edit the guest at /guests/:id/edit", (done) ->
+			_fetchPage "/guests/1/edit", ->
+				_textOfElement(_bodyDoc, "//head/title").should.match /Edit Guest/i
+				done()
 
-		it "should display the posted edit on /guests"
+		# it "should display the posted edit on /guests", (done) ->
+		# 	body =
+		# 		id: 2
+		# 		name: "Edited Guest"
+		# 		description: "Edited Description"
+		# 		mobileNumber: "9995551212"
+
+		# 	request.post {uri:"#{uriRoot(app)}/guests", form: body, followAllRedirects:true}, (err, response, body) ->
+		# 		_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->
+		# 			app.log.info {body: body}, "Response from /guests after edit"
+		# 			_containsTextUnderElement("Edited Guest", bodyDoc, "//table/tbody/tr[1]/td[2]").should.equal true, "edited guest should appear as name after edit."
+
 
 	describe "Delete a guest", ->
-
 		it "should remove the guest from the /guests page"
 
 	describe "Page a guest", ->
-
 		it "should trigger an SMS to page the guest"
 
 

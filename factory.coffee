@@ -1,5 +1,5 @@
 class TestStore
-	constructor: (@guests) ->
+	constructor: (@log, @guests) ->
 	
 	addOrUpdateGuest: (guest, callback) =>
 		guests = @guests
@@ -8,6 +8,14 @@ class TestStore
 
 	findAllGuests: (callback) =>
 		callback null, @guests
+
+	findGuestById: (id, callback) =>
+		for guest in @guests
+			if guest.id = id
+				callback null, guest
+				return
+		callback "Guest #{id} not found", null
+
 
 class Factory
 	createLogWithNameAndStreams: (name,streams) =>
@@ -24,7 +32,6 @@ class Factory
 	createProductionLog: () =>
 		name = "guestpager-prod"
 		streams = [{stream: process.stdout, level: "debug"}]
-
 		log = @createLogWithNameAndStreams(name,streams)
 		return log	
 
@@ -37,15 +44,14 @@ class Factory
 	createTestLog: () =>
 		name = "guestpager-test"
 		streams = [{path: "#{name}.log", level: "debug"}]
-
 		log = @createLogWithNameAndStreams(name,streams)
 		return log	
 
-	createProductionStore: (guests) =>
-		return @createTestStore(guests)
+	createProductionStore: (log, guests) =>
+		return @createTestStore(log, guests)
 
-	createTestStore: (guests) =>
-		return new TestStore(guests)
+	createTestStore: (log, guests) =>
+		return new TestStore(log, guests)
 
 
 module.exports = new Factory()

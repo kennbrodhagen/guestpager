@@ -3,7 +3,7 @@
 # GET						/guests/new					new					return an HTML form for creating a new todo
 # POST					/guests							create			create a new todo
 # GET						/guests/:id					show				display a specific todo
-# GET						/guests/:id/edit			edit				return an HTML form for editing a todo
+# GET						/guests/:id/edit		edit				return an HTML form for editing a todo
 # PUT/POST			/guests/:id					update			update a specific todo
 # DELETE				/guests/:id					destroy			delete a specific todo
 
@@ -18,6 +18,12 @@ class GuestsController
 	constructor: (app) ->
 		@app = app
 
+	create: (req, res) =>
+		app = @app
+		guest = buildGuestFromBody(req.body)
+		app.store.addOrUpdateGuest buildGuestFromBody(req.body), (err, guest) ->
+			res.redirect "/guests"
+
 	index: (req, res) =>
 		#@app.log.info {req: req}, "guestsController#index"
 		app = @app
@@ -28,8 +34,14 @@ class GuestsController
 
 	new: (req, res) =>
 		#@app.log.info {req: req}, "guestsController#new"
-		app = @app
 		renderArgs = {title: "Add Guest"}
 		res.render 'guests-new', renderArgs
+
+	edit: (req, res) =>
+		app = @app
+		id = req.param "id"
+		app.store.findGuestById id, (err, guest) ->
+			renderArgs = {title: "Edit Guest", guest: guest}
+			res.render "guests-edit", renderArgs
 
 module.exports = GuestsController

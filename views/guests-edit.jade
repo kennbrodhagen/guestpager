@@ -1,0 +1,16 @@
+include navbar
+.container
+	section#guestForm
+			.page-header
+				h1 Add a Guest
+				form(action="/guests/#{guest.id}").well
+					input(type="hidden", id="id", name="id", value="#{guest.id}")
+					label Name
+					input(type="text", id="name", name="name", value="#{guest.name}")
+					label Description
+					input(type="text", id="description", name="description", value="#{guest.description}")
+					label Mobile Phone Number
+					input(type="text", id="mobileNumber", name="mobileNumber", value="#{guest.mobileNumber}")
+					p
+						button.btn(type="submit") Save
+	include footer

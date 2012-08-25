@@ -3,7 +3,7 @@
 # GET						/guests/new					new					return an HTML form for creating a new todo
 # POST					/guests							create			create a new todo
 # GET						/guests/:id					show				display a specific todo
-# GET						/guests/:id/edit			edit				return an HTML form for editing a todo
+# GET						/guests/:id/edit		edit				return an HTML form for editing a todo
 # PUT/POST			/guests/:id					update			update a specific todo
 # DELETE				/guests/:id					destroy			delete a specific todo
 
@@ -22,5 +22,7 @@ router = (app) ->
 	app.server.get '/home', homeController.index
 	app.server.get '/guests', guestsController.index
 	app.server.get '/guests/new', guestsController.new
+	app.server.post '/guests', guestsController.create
+	app.server.get '/guests/:id/edit', guestsController.edit
 
 module.exports = router
