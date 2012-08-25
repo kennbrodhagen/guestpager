@@ -44,4 +44,13 @@ class GuestsController
 			renderArgs = {title: "Edit Guest", guest: guest}
 			res.render "guests-edit", renderArgs
 
+	update: (req, res) =>
+		app = @app
+		id = req.param "id"
+		app.store.findGuestById id, (err, guest) ->
+			guest.name = req.body.name
+			guest.description = req.body.description
+			guest.mobileNumber = req.body.mobileNumber
+			res.redirect "/guests"
+
 module.exports = GuestsController

@@ -11,12 +11,16 @@ should				= require "should"
 
 describe "Controllers", ->
 	app = null
-	before (done)->
+	before (done) ->		
 		factory = require "../factory"
 		App = require "../app"
 		log = factory.createTestLog()
 		app = new App(log, factory.createTestStore(log, factory.createTestGuests()))
+		log.info "STARTING Controllers test"
 		done()
+
+	after ->
+		app.log.info "FINISHED Controllers test"
 
 	describe "Guests Controller", ->
 
@@ -28,6 +32,8 @@ describe "Controllers", ->
 				@req = 
 					body: {}
 					params: {}
+					param: (name) =>
+						@req.params[name]
 
 				@res =
 					redirect: (url) =>
@@ -76,6 +82,36 @@ describe "Controllers", ->
 					foundNewGuest.should.equal true, "Should find Joe Guest in the store after we post him as a new guest."
 					_controllerInspector.redirectedUrl.should.equal "/guests"
 					done()
+
+		describe "GuestsController.edit", ->
+
+			it "should render a template to edit the guest", (done) ->
+				_controllerInspector.req.params.id = 1
+				
+				_controller.edit _controllerInspector.req, _controllerInspector.res				
+				_controllerInspector.renderedTemplate.should.equal 'guests-edit', "Should render guest edit template"
+				_controllerInspector.renderedArgs.guest.id.should.equal 1
+				done()
+
+		describe "GuestsController.update", ->
+
+			beforeEach (done) ->
+				_controllerInspector.req.params.id = 1
+				_controllerInspector.req.body.name = "Edited Guest"
+				_controllerInspector.req.body.description = "Party of 5"
+				_controllerInspector.req.body.mobileNumber = "4045551212"
+
+				_controller.update _controllerInspector.req, _controllerInspector.res
+				done()
+
+			it "should update the store with the new guest information", (done) ->	
+				app.store.findGuestById 1, (err, guest) ->
+					guest.name.should.equal "Edited Guest"
+					done()
+
+			it "should redirect to /guests", (done) ->
+				_controllerInspector.redirectedUrl.should.equal "/guests"
+				done()
 
 
 

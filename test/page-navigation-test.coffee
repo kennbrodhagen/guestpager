@@ -20,11 +20,11 @@ describe 'Page Navigation', ->
 		log = factory.createTestLog()
 		app = new App log, factory.createTestStore(log, factory.createTestGuests())
 		app.server.listen app.server.settings.port, () ->
-			app.log.info "Test server listening on port #{app.server.settings.port} in #{app.server.settings.env} mode"
+			app.log.info "STARTING Page Navigation test server listening on port #{app.server.settings.port} in #{app.server.settings.env} mode"
 			done()
 
 	after (done) ->
-		app.log.info "Test server shutting down."
+		app.log.info "FINISHED Page Navigation test. Shutting down server."
 		app.server.close()
 		app = null
 		done()
