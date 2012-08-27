@@ -65,29 +65,6 @@ describe 'Page Navigation', ->
 	_confirmRequestStatusAndParseXml = (expectedStatus, err, response, body, callback) ->
 		_confirmRequestStatusAndParse expectedStatus, err, response, body, libxmljs.parseXmlString, callback
 
-	# Helper method returns true if the xpath has at least one node containing text value text
-	_containsTextUnderElement = (text, bodyDoc, xpath) ->
-		elementsMatchingXpath = bodyDoc.find(xpath)
-		should.exist elementsMatchingXpath, "Document find(#{xpath}) returned null."
-		#app.log.info "\n *** text = #{text} xpath = #{xpath}"
-		elementsMatchingXpath.length.should.be.greaterThan 0, "XPath #{xpath} did not match any elements."
-		for element in elementsMatchingXpath
-			#app.log.info "\n *** element = \n#{JSON.stringify(element)} \n *** element.text = \n#{element.text()}\n "
-			if element.text() is text 
-				return true
-		return false
-
-	# returns the text of the first element matching the xpath.
-	# does a bunch of extra asserst along the way to help you debug when it doesn't find what you want
-	_textOfElement = (bodyDoc, xpath) ->
-		elementsMatchingXpath = bodyDoc.find(xpath)
-		should.exist elementsMatchingXpath, "Document find() returned null."
-		elementsMatchingXpath.length.should.be.greaterThan 0, "XPath #{xpath} did not match any elements."
-		should.exist elementsMatchingXpath[0].text, "First element matching xpath #{xpath} does not have text property."
-		textMatchingXmlpath = elementsMatchingXpath[0].text()
-		should.exist textMatchingXmlpath, "Text method of matching element to xpath #{xpath} returned null."
-		return textMatchingXmlpath
-
 	# Tests for the various page navigation
 	describe 'View the root page /', ->
 
@@ -103,11 +80,11 @@ describe 'Page Navigation', ->
 				done()
 
 		it "should have should have the site name in the title", (done) ->
-			_textOfElement(_bodyDoc, '//head/title').should.match /Phone System/
+			_bodyDoc.get("//head/title").should.match /Phone System/
 			done()
 
 		it "should have a link to the guests list", (done) ->
-			_textOfElement(_bodyDoc, "//a[@id='guests-index' and @href='/guests']").should.match /Guests/
+			_bodyDoc.get("//a[@id='guests-index' and @href='/guests']").should.match /Guests/
 			done()
 
 	describe "View the guests page /guests", ->
@@ -117,7 +94,7 @@ describe 'Page Navigation', ->
 				done()
 
 		it "should have guests in the title", ->
-			_textOfElement(_bodyDoc, "//head/title").should.match /Guests/i
+			_bodyDoc.get("//head/title").should.match /Guests/i
 
 		it "should have a grid of guests", ->
 			listItems = _bodyDoc.find("//section[@id='guestsGrid']")
@@ -125,25 +102,25 @@ describe 'Page Navigation', ->
 			listItems.length.should.be.greaterThan 0, "failed to find nodes matching xpath"
 
 		it "should have a guest with the mobile number 6785551001", ->
-			_containsTextUnderElement("6785551001", _bodyDoc, "//table/tbody/tr[1]/td[4]").should.equal true, "test number not shown"
+			_bodyDoc.get("//table/tbody/tr[1]/td[4]").should.match /6785551001/, "test number not shown"
 
 		it "should have a button to add a new guest", ->
-			_textOfElement(_bodyDoc, "//a[@href='/guests/new']").should.match /Add Guest/
+			_bodyDoc.get("//a[@href='/guests/new']").should.match /Add Guest/
 
 		it "should have a button to page a guest", ->
-			_textOfElement(_bodyDoc, "//a[@href='/guests/1/page']").should.match /Page/
+			_bodyDoc.get("//a[@href='/guests/1/page']").should.match /Page/
 
 		it "should have a button to edit a guest", ->
-			_textOfElement(_bodyDoc, "//a[@href='/guests/1/edit']").should.match /Edit/
+			_bodyDoc.get("//a[@href='/guests/1/edit']").should.match /Edit/
 
 		it "should have a button to delete a guest", ->
-			_textOfElement(_bodyDoc, "//a[@href='/guests/1/delete']").should.match /Remove/
+			_bodyDoc.get("//a[@href='/guests/1/delete']").should.match /Remove/
 
 	describe "Add a new guest", ->
 
 		it "should have a screen to add a new guest /guests/new", (done) ->
 			_fetchPage "/guests/new", ->
-				_textOfElement(_bodyDoc, "//head/title").should.match /Add Guest/i
+				_bodyDoc.get("//head/title").should.match /Add Guest/i
 				done()
 
 		it "should show the new guest on /guests", (done) ->
@@ -154,14 +131,14 @@ describe 'Page Navigation', ->
 
 			request.post {uri:"#{uriRoot(app)}/guests", form: body, followAllRedirects:true}, (err, response, body) ->				
 				_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->
-					_containsTextUnderElement("Joe Guest", bodyDoc, "//table/tbody/tr[3]/td[2]").should.equal true, "new guest not added"
+					bodyDoc.get("//table/tbody/tr[3]/td[2]").should.match /Joe Guest/, "new guest not added"
 					done()
 
 	describe "Edit a guest", ->
 
 		it "should have a screen to edit the guest at /guests/:id/edit", (done) ->
 			_fetchPage "/guests/1/edit", ->
-				_textOfElement(_bodyDoc, "//head/title").should.match /Edit Guest/i
+				_bodyDoc.get("//head/title").should.match /Edit Guest/i
 				done()
 
 		# it "should display the posted edit on /guests", (done) ->
