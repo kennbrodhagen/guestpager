@@ -39,15 +39,16 @@ class GuestsController
 
 	edit: (req, res) =>
 		app = @app
-		id = req.param "id"
+		id = parseInt(req.param "id")
 		app.store.findGuestById id, (err, guest) ->
 			renderArgs = {title: "Edit Guest", guest: guest}
 			res.render "guests-edit", renderArgs
 
 	update: (req, res) =>
 		app = @app
-		id = req.param "id"
+		id = parseInt(req.param("id"))
 		app.store.findGuestById id, (err, guest) ->
+			app.log.info {guest: guest}, "Update Found Guest"
 			guest.name = req.body.name
 			guest.description = req.body.description
 			guest.mobileNumber = req.body.mobileNumber

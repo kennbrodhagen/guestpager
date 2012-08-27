@@ -141,17 +141,17 @@ describe 'Page Navigation', ->
 				_bodyDoc.get("//head/title").should.match /Edit Guest/i
 				done()
 
-		# it "should display the posted edit on /guests", (done) ->
-		# 	body =
-		# 		id: 2
-		# 		name: "Edited Guest"
-		# 		description: "Edited Description"
-		# 		mobileNumber: "9995551212"
+		it "should display the posted edit on /guests", (done) ->
+			body =
+				id: 2
+				name: "Edited Guest"
+				description: "Edited Description"
+				mobileNumber: "9995551212"
 
-		# 	request.post {uri:"#{uriRoot(app)}/guests", form: body, followAllRedirects:true}, (err, response, body) ->
-		# 		_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->
-		# 			app.log.info {body: body}, "Response from /guests after edit"
-		# 			_containsTextUnderElement("Edited Guest", bodyDoc, "//table/tbody/tr[1]/td[2]").should.equal true, "edited guest should appear as name after edit."
+			request.post {uri:"#{uriRoot(app)}/guests/2", form: body, followAllRedirects:true}, (err, response, body) ->
+				_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->
+					bodyDoc.get("//table/tbody/tr[2]/td[2]").should.match /Edited Guest/, "Guest name should be updated on edit"
+					done()
 
 
 	describe "Delete a guest", ->

@@ -11,7 +11,7 @@ class TestStore
 
 	findGuestById: (id, callback) =>
 		for guest in @guests
-			if guest.id = id
+			if guest.id == id
 				callback null, guest
 				return
 		callback "Guest #{id} not found", null
