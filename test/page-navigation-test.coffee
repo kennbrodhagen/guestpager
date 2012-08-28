@@ -12,34 +12,40 @@ uriRoot = (app) ->
 describe 'Page Navigation', ->
 	_bodyDoc = null
 	app = null
+	factory = require "../factory"
+
 
 	# Start and stop the web server on the boundaries of this test suite.
 	before (done) ->
-		factory = require "../factory"
 		App = require "../app"
-		app = new App factory.createTestLog(), factory.createTestStore(factory.createTestGuests())
+		log = factory.createTestLog()
+		app = new App log, factory.createTestStore(log, factory.createTestGuests())
 		app.server.listen app.server.settings.port, () ->
-			app.log.info "Test server listening on port #{app.server.settings.port} in #{app.server.settings.env} mode"
+			app.log.info "STARTING Page Navigation test server listening on port #{app.server.settings.port} in #{app.server.settings.env} mode"
 			done()
 
+	beforeEach ->
+		# reset the store's guests after each test to ensure a consistent starting point
+		app.store.guests = factory.createTestGuests()
+
 	after (done) ->
-		app.log.info "Test server shutting down."
+		app.log.info "FINISHED Page Navigation test. Shutting down server."
 		app.server.close()
 		app = null
 		done()
 
 
 	# Helper method to make a request, confirm it was successful, and parse the body
-	_requestConfirmAndParse = (uri, guestback) ->
+	_requestConfirmAndParse = (uri, callback) ->
 			#app.log.info "*** REQUESTING URI: #{uri}"
 			request.get {uri:uri}, (err, response, body) ->
-				_confirmRequestStatusAndParseHtml err, response, body, guestback
+				_confirmRequestStatusAndParseHtml err, response, body, callback
 
 
 	# Helper method to confirm a response was successful
 	# Parses and save the body as an html dom object.
 	# It's nice to provide the additional description argument since these functions are guested from many places.
-	_confirmRequestStatusAndParse = (expectedStatus, err, response, body, parse, guestback) ->
+	_confirmRequestStatusAndParse = (expectedStatus, err, response, body, parse, callback) ->
 		#app.log.info {response: body}, "Response #{response}"
 		should.not.exist err, "Request returned an error: #{JSON.stringify(err)}."
 		should.exist  response, "Response is null."
@@ -47,39 +53,19 @@ describe 'Page Navigation', ->
 		should.exist body, "Body is null."
 		bodyDoc = parse body
 		should.exist bodyDoc, "Body parsed into null document."
-		#app.log.info "*** REQUEST SUCCESSFUL.  \n*** RESPONSE:\n"
-		#app.log.info "*** REQUEST SUCCESSFUL.  \n*** BODY:\n #{JSON.stringify(body)}\n"
-		#app.log.info "*** REQUEST SUCCESSFUL.  \n*** BODYDOC:\n #{JSON.stringify(bodyDoc)}\n"
-		guestback(bodyDoc)
+		callback(bodyDoc)
 
-	_confirmRequestStatusAndParseHtml = (expectedStatus, err, response, body, guestback) ->
-		_confirmRequestStatusAndParse expectedStatus, err, response, body, libxmljs.parseHtmlString, guestback
+	_fetchPage = (page, callback) ->
+		request.get {uri:"#{uriRoot(app) + page}"}, (err, response, body) ->
+			_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->	
+				_bodyDoc = bodyDoc	
+				callback(bodyDoc)	
 
-	_confirmRequestStatusAndParseXml = (expectedStatus, err, response, body, guestback) ->
-		_confirmRequestStatusAndParse expectedStatus, err, response, body, libxmljs.parseXmlString, guestback
+	_confirmRequestStatusAndParseHtml = (expectedStatus, err, response, body, callback) ->
+		_confirmRequestStatusAndParse expectedStatus, err, response, body, libxmljs.parseHtmlString, callback
 
-	# Helper method returns true if the xpath has at least one node containing text value text
-	_containsTextUnderElement = (text, bodyDoc, xpath) ->
-		elementsMatchingXpath = bodyDoc.find(xpath)
-		should.exist elementsMatchingXpath, "Document find(#{xpath}) returned null."
-		#app.log.info "\n *** text = #{text} xpath = #{xpath}"
-		elementsMatchingXpath.length.should.be.greaterThan 0, "XPath #{xpath} did not match any elements."
-		for element in elementsMatchingXpath
-			#app.log.info "\n *** element = \n#{JSON.stringify(element)} \n *** element.text = \n#{element.text()}\n "
-			if element.text() is text 
-				return true
-		return false
-
-	# returns the text of the first element matching the xpath.
-	# does a bunch of extra asserst along the way to help you debug when it doesn't find what you want
-	_textOfElement = (bodyDoc, xpath) ->
-		elementsMatchingXpath = bodyDoc.find(xpath)
-		should.exist elementsMatchingXpath, "Document find() returned null."
-		elementsMatchingXpath.length.should.be.greaterThan 0, "XPath #{xpath} did not match any elements."
-		should.exist elementsMatchingXpath[0].text, "First element matching xpath #{xpath} does not have text property."
-		textMatchingXmlpath = elementsMatchingXpath[0].text()
-		should.exist textMatchingXmlpath, "Text method of matching element to xpath #{xpath} returned null."
-		return textMatchingXmlpath
+	_confirmRequestStatusAndParseXml = (expectedStatus, err, response, body, callback) ->
+		_confirmRequestStatusAndParse expectedStatus, err, response, body, libxmljs.parseXmlString, callback
 
 	# Tests for the various page navigation
 	describe 'View the root page /', ->
@@ -91,29 +77,26 @@ describe 'Page Navigation', ->
 
 	describe 'View the home page /home', ->
 
+		before (done) ->
+			_fetchPage "/home", ->
+				done()
+
 		it "should have should have the site name in the title", (done) ->
-			#app.log.info "\n\n*** BODYDOC:\n #{JSON.stringify(_bodyDoc)}\n\n"
-			request.get {uri:"#{uriRoot(app)}/home"}, (err, response, body) ->
-				_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->
-					_textOfElement(bodyDoc, '//head/title').should.match /Phone System/
-					done()
+			_bodyDoc.get("//head/title").should.match /Phone System/
+			done()
 
 		it "should have a link to the guests list", (done) ->
-			request.get {uri:"#{uriRoot(app)}/home"}, (err, response, body) ->
-				_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->
-					_textOfElement(bodyDoc, "//a[@id='guests-index' and @href='/guests']").should.match /Guests/
-					done()
+			_bodyDoc.get("//a[@id='guests-index' and @href='/guests']").should.match /Guests/
+			done()
 
 	describe "View the guests page /guests", ->
 
 		before (done) ->
-			request.get {uri:"#{uriRoot(app)}/guests"}, (err, response, body) ->
-				_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->	
-					_bodyDoc = bodyDoc	
-					done()	
+			_fetchPage "/guests", ->
+				done()
 
 		it "should have guests in the title", ->
-			_textOfElement(_bodyDoc, "//head/title").should.match /Guests/i
+			_bodyDoc.get("//head/title").should.match /Guests/i
 
 		it "should have a grid of guests", ->
 			listItems = _bodyDoc.find("//section[@id='guestsGrid']")
@@ -121,33 +104,69 @@ describe 'Page Navigation', ->
 			listItems.length.should.be.greaterThan 0, "failed to find nodes matching xpath"
 
 		it "should have a guest with the mobile number 6785551001", ->
-			_containsTextUnderElement("6785551001", _bodyDoc, "//table/tbody/tr[1]/td[4]").should.equal true, "test number not shown"
+			_bodyDoc.get("//table/tbody/tr[1]/td[4]").should.match /6785551001/, "test number not shown"
 
 		it "should have a button to add a new guest", ->
-			_textOfElement(_bodyDoc, "//a[@href='/guests/new']").should.match /Add Guest/
+			_bodyDoc.get("//a[@href='/guests/new']").should.match /Add Guest/
 
 		it "should have a button to page a guest", ->
-			_textOfElement(_bodyDoc, "//a[@href='/guests/1/page']").should.match /Page/
+			_bodyDoc.get("//a[@href='/guests/1/page']").should.match /Page/
 
 		it "should have a button to edit a guest", ->
-			_textOfElement(_bodyDoc, "//a[@href='/guests/1/edit']").should.match /Edit/
+			_bodyDoc.get("//a[@href='/guests/1/edit']").should.match /Edit/
 
 		it "should have a button to delete a guest", ->
-			_textOfElement(_bodyDoc, "//a[@href='/guests/1/delete']").should.match /Remove/
+			_bodyDoc.get("//a[@href='/guests/1/delete']").should.match /Remove/
 
 	describe "Add a new guest", ->
 
-		it "should have a screen to add a new guest /guests/new"
+		it "should have a screen to add a new guest /guests/new", (done) ->
+			_fetchPage "/guests/new", ->
+				_bodyDoc.get("//head/title").should.match /Add Guest/i
+				done()
 
-		it "should show the new guest on /guests"
+		it "should show the new guest on /guests", (done) ->
+			body =
+				name: "Joe Guest"
+				description: "Party of 5"
+				mobileNumber: "4045551212"
 
-	describe "Page a guest", ->
+			request.post {uri:"#{uriRoot(app)}/guests", form: body, followAllRedirects:true}, (err, response, body) ->				
+				_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->
+					bodyDoc.get("//table/tbody/tr[3]/td[2]").should.match /Joe Guest/, "new guest not added"
+					done()
 
-		it "should trigger an SMS to page the guest"
+	describe "Edit a guest", ->
+
+		it "should have a screen to edit the guest at /guests/:id/edit", (done) ->
+			_fetchPage "/guests/1/edit", ->
+				_bodyDoc.get("//head/title").should.match /Edit Guest/i
+				done()
+
+		it "should display the posted edit on /guests", (done) ->
+			body =
+				id: 2
+				name: "Edited Guest"
+				description: "Edited Description"
+				mobileNumber: "9995551212"
+
+			request.post {uri:"#{uriRoot(app)}/guests/2", form: body, followAllRedirects:true}, (err, response, body) ->
+				_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->
+					bodyDoc.get("//table/tbody/tr[2]/td[2]").should.match /Edited Guest/, "Guest name should be updated on edit"
+					done()
+
 
 	describe "Delete a guest", ->
+		it "should remove the guest from the /guests page", (done) ->
+			request.del {uri:"#{uriRoot(app)}/guests/1", followAllRedirects:true}, (err, response, body) ->
+				_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->
+					bodyDoc.get("//table/tbody/tr[1]/td[2]").should.not.match /Kenn/, "Guest name should be updated on edit"
+					done()
 
-		it "should remove the guest from the /guests page"
+
+	describe "Page a guest", ->
+		it "should trigger an SMS to page the guest"
+
 
 
 
