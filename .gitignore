@@ -6,4 +6,4 @@ bunyan.log
 
 heroku.log
 
-gi*.log
+*.log
