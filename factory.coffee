@@ -16,6 +16,14 @@ class TestStore
 				return
 		callback "Guest #{id} not found", null
 
+	removeGuestById: (id, callback) =>
+		guests = @guests
+		@findGuestById id, (err, guest) ->
+			index = guests.indexOf guest
+			guests.splice index, 1
+			callback null, guest
+
+
 
 class Factory
 	createLogWithNameAndStreams: (name,streams) =>

@@ -48,10 +48,15 @@ class GuestsController
 		app = @app
 		id = parseInt(req.param("id"))
 		app.store.findGuestById id, (err, guest) ->
-			app.log.info {guest: guest}, "Update Found Guest"
 			guest.name = req.body.name
 			guest.description = req.body.description
 			guest.mobileNumber = req.body.mobileNumber
+			res.redirect "/guests"
+
+	destroy: (req, res) =>
+		app = @app
+		id = parseInt(req.param("id"))
+		app.store.removeGuestById id, (err, guest) ->
 			res.redirect "/guests"
 
 module.exports = GuestsController

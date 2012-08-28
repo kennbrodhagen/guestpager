@@ -113,6 +113,24 @@ describe "Controllers", ->
 				_controllerInspector.redirectedUrl.should.equal "/guests"
 				done()
 
+		describe "GuestsController.destory", ->
+
+			beforeEach (done) ->
+				_controllerInspector.req.params.id = 1
+				_controller.destroy _controllerInspector.req, _controllerInspector.res
+				done()
+
+			it "should delete the guest from the store", (done) ->	
+				app.store.findGuestById 1, (err, guest) ->
+					should.exist err, "Guest with id 1 should not be found after delete"
+					done()
+
+			it "should redirect to /guests", (done) ->
+				_controllerInspector.redirectedUrl.should.equal "/guests"
+				done()
+
+
+
 
 
 

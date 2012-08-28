@@ -12,16 +12,21 @@ uriRoot = (app) ->
 describe 'Page Navigation', ->
 	_bodyDoc = null
 	app = null
+	factory = require "../factory"
+
 
 	# Start and stop the web server on the boundaries of this test suite.
 	before (done) ->
-		factory = require "../factory"
 		App = require "../app"
 		log = factory.createTestLog()
 		app = new App log, factory.createTestStore(log, factory.createTestGuests())
 		app.server.listen app.server.settings.port, () ->
 			app.log.info "STARTING Page Navigation test server listening on port #{app.server.settings.port} in #{app.server.settings.env} mode"
 			done()
+
+	beforeEach ->
+		# reset the store's guests after each test to ensure a consistent starting point
+		app.store.guests = factory.createTestGuests()
 
 	after (done) ->
 		app.log.info "FINISHED Page Navigation test. Shutting down server."
@@ -48,9 +53,6 @@ describe 'Page Navigation', ->
 		should.exist body, "Body is null."
 		bodyDoc = parse body
 		should.exist bodyDoc, "Body parsed into null document."
-		# app.log.info "*** REQUEST SUCCESSFUL.  \n*** RESPONSE:\n"
-		# app.log.info "*** REQUEST SUCCESSFUL.  \n*** BODY:\n #{JSON.stringify(body)}\n"
-		# app.log.info "*** REQUEST SUCCESSFUL.  \n*** BODYDOC:\n #{JSON.stringify(bodyDoc)}\n"
 		callback(bodyDoc)
 
 	_fetchPage = (page, callback) ->
@@ -155,7 +157,12 @@ describe 'Page Navigation', ->
 
 
 	describe "Delete a guest", ->
-		it "should remove the guest from the /guests page"
+		it "should remove the guest from the /guests page", (done) ->
+			request.del {uri:"#{uriRoot(app)}/guests/1", followAllRedirects:true}, (err, response, body) ->
+				_confirmRequestStatusAndParseHtml 200, err, response, body, (bodyDoc) ->
+					bodyDoc.get("//table/tbody/tr[1]/td[2]").should.not.match /Kenn/, "Guest name should be updated on edit"
+					done()
+
 
 	describe "Page a guest", ->
 		it "should trigger an SMS to page the guest"

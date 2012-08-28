@@ -25,5 +25,6 @@ router = (app) ->
 	app.server.post '/guests', guestsController.create
 	app.server.get '/guests/:id/edit', guestsController.edit
 	app.server.post '/guests/:id', guestsController.update
+	app.server.delete '/guests/:id', guestsController.destroy
 
 module.exports = router
